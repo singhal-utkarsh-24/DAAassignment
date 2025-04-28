@@ -9,9 +9,9 @@
 <body>
     <div class="container">
         <h1>Algorithm 1: Exact</h1>
-        <!-- <div class="note">
-            <p><strong>NOTE:</strong> Click on each image to get the number of maximal cliques of each size.
-        </div> -->
+        <div class="note">
+            <p><strong>NOTE:</strong> The table below shows results computed for 3-clique density (triangle-based analysis)
+        </div>
         <!-- Histograms Section -->
         <div class="histograms">
             <div class="histogram">
@@ -46,6 +46,64 @@
                         <td>155</td>
                         <td>2673.86 sec</td>
                     </tr>   
+                </table>
+            </div>
+        </div>
+
+        <div class="note">
+            <p><strong>NOTE:</strong> The table below shows results computed for 4-clique density (analysis of complete 4-node subgraphs)
+        </div>
+        <!-- Histograms Section -->
+        <div class="histograms">
+            <div class="histogram">
+                <table class="new-table">
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Number of Vertices in CDS</th>
+                        <th>Density</th>
+                        <th>Runtime</th>
+                    </tr>
+                    <tr>
+                        <td>AS - 733</td>
+                        <td>28</td>
+                        <td>68.5</td>
+                        <td>44.74 sec</td>
+                    </tr>
+                    <tr>
+                        <td>Netscience</td>
+                        <td>20</td>
+                        <td>242.25</td>
+                        <td>49.5996 sec</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="note">
+            <p><strong>NOTE:</strong> The table below shows results computed for 5-clique density (analysis of complete 5-node subgraphs)
+        </div>
+        <!-- Histograms Section -->
+        <div class="histograms">
+            <div class="histogram">
+                <table class="new-table">
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Number of Vertices in CDS</th>
+                        <th>Density</th>
+                        <th>Runtime</th>
+                    </tr>
+                    <tr>
+                        <td>AS - 733</td>
+                        <td>28</td>
+                        <td>92.3571</td>
+                        <td>62.1517</td>
+                    </tr>
+                    <tr>
+                        <td>Netscience</td>
+                        <td>20</td>
+                        <td>775.2</td>
+                        <td>93.1583 sec</td>
+                    </tr>
                 </table>
             </div>
         </div>
@@ -360,7 +418,8 @@ int main(int argc, char* argv[]) {
 }</code></pre>                
         </div>
 
-        <div class="back-button">
+        <div class="back-buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <a href="Assignment2.html" class="button">Back to Assignment - 2</a>
             <a href="index.html" class="button">Back to Home</a>
         </div>
         
