@@ -9,254 +9,344 @@
 <body>
     <div class="container">
         <h1>Algorithm 4: Core Exact</h1>
-        <div class="note">
+        <!-- <div class="note">
             <p><strong>NOTE:</strong> Click on each image to get the number of maximal cliques of each size.
-        </div>
+        </div> -->
         <!-- Histograms Section -->
         <div class="histograms">
             <div class="histogram">
-                <a href = "DakshWikiBig.png" target="_blank">
-                <img src="dakshWiki.png" alt="Wiki Histogram">
-                </a>
-                <table>
+                <table class="new-table">
                     <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
+                        <th>Dataset</th>
+                        <th>Number of Vertices in CDS</th>
+                        <th>Density</th>
+                        <th>Runtime</th>
                     </tr>
                     <tr>
-                        <td>Largest Clique Size</td>
-                        <td>17</td>
+                        <td>AS - 733</td>
+                        <td>28</td>
+                        <td>30.8182</td>
+                        <td>1.20914 sec</td>
                     </tr>
                     <tr>
-                        <td>Total number of maximal cliques</td>
-                        <td>459002</td>
+                        <td>Yeast</td>
+                        <td>36</td>
+                        <td>0.805556</td>
+                        <td>1.31489 sec</td>
                     </tr>
                     <tr>
-                        <td>Execution time without Parallelization</td>
-                        <td>1.810 sec</td>
-                    </tr>
-                    <tr>
-                        <td>Execution time with Parallelization</td>
-                        <td>0.459 sec</td>
-                    </tr>
-                </table>
-            </br>
-            </div>
-
-            <div class="histogram">
-                <a href = "DakshEnronBig.png" target="_blank">
-                <img src="DakshEnron.png" alt="Enron Histogram">
-            </a>
-                <table>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td>Largest Clique Size</td>
+                        <td>Netscience</td>
                         <td>20</td>
+                        <td>57</td>
+                        <td>1.14246 sec</td>
                     </tr>
                     <tr>
-                        <td>Total number of maximal cliques</td>
-                        <td>226859</td>
-                    </tr>
-                    <tr>
-                        <td>Execution time without Parallelization</td>
-                        <td>50.513 sec</td>
-                    </tr>
-                    <tr>
-                        <td>Execution time with Parallelization</td>
-                        <td>7.755 sec</td>
-                    </tr>
+                        <td>Hepth</td>
+                        <td>32</td>
+                        <td>155</td>
+                        <td>1.24845 sec</td>
+                    </tr>   
                 </table>
             </div>
-
-            <div class="histogram">
-                <a href = "KhushSkitterBig.png" target="_blank">
-                <img src="Khush Skitter.png" alt="Skitter Histogram"> </a>
-                <table>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td>Largest Clique Size</td>
-                        <td>67</td>
-                    </tr>
-                    <tr>
-                        <td>Total number of maximal cliques</td>
-                        <td>37322355</td>
-                    </tr>
-                    <tr>
-                        <td>Execution time without Parallelization</td>
-                        <td>48368.6 s ~ 13.43 hrs</td>
-                    </tr>
-                    <tr>
-                        <td>Execution time with Parallelization</td>
-                    <td>3351.14 s ~ 55.9 mins</td>
-                    </tr>
-                </table>
-            </div>
-            
         </div>
 
         <!-- Source Code Section -->
         <div class="source-code">
-            <h2>Source Code (Non-Parallelized)</h2>
-            <pre><code>
-                #include &lt;bits/stdc++.h&gt;
-                using namespace std;
-                
-                struct Graph {
-                    int n;
-                    vector&lt;unordered_set&lt;int&gt;&gt; adj;
-                    Graph(int n) : n(n), adj(n) {}  
-                    void addEdge(int u, int v) {
-                        adj[u].insert(v);
-                        adj[v].insert(u);
+            <h2>Source Code</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;sstream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;limits&gt;
+#include &lt;algorithm&gt;
+#include &lt;unordered_set&gt;
+#include &lt;unordered_map&gt;
+#include &lt;chrono&gt;
+using namespace std;
+struct Net {
+    int V;
+    vector&lt;vector&lt;int&gt;&gt; edges;
+    Net(int n=0): V(n), edges(n) {}
+    void connect(int a, int b) {
+        if (a&lt;0 || b&lt;0 || a&gt;=V || b&gt;=V) return;
+        edges[a].push_back(b);
+        edges[b].push_back(a);
+    }
+};
+Net loadFromEdgeList(const char* path) {
+    ifstream fin(path);
+    if (!fin) {
+        cerr &lt;&lt; "Error: cannot open file " &lt;&lt; path &lt;&lt; "\n";
+        exit(1);
+    }
+    string line; 
+    int u, v, maxId = -1;
+    vector&lt;pair&lt;int,int&gt;&gt; el;
+    while (getline(fin, line)) {
+        if (line.empty() || line[0]=='#') continue;
+        istringstream ss(line);
+        if (!(ss &gt;&gt; u &gt;&gt; v)) continue;
+        el.emplace_back(u,v);
+        maxId = max(maxId, max(u,v));
+    }
+    Net net(maxId+1);
+    for (auto &amp;p : el) net.connect(p.first, p.second);
+    return net;
+}
+// recursive backtracking to collect all k-cliques
+void collectCliques(const Net &amp;net, int k, 
+                    vector&lt;int&gt; &amp;curr, 
+                    vector&lt;int&gt; &amp;candidates, 
+                    vector&lt;vector&lt;int&gt;&gt; &amp;out) 
+{
+    if ((int)curr.size() == k) {
+        out.push_back(curr);
+        return;
+    }
+    while (!candidates.empty()) {
+        int w = candidates.back();
+        candidates.pop_back();
+        vector&lt;int&gt; nextCand;
+        for (int x : candidates) {
+            if (find(net.edges[w].begin(), net.edges[w].end(), x)
+                != net.edges[w].end()) {
+                nextCand.push_back(x);
+            }
+        }
+        curr.push_back(w);
+        collectCliques(net, k, curr, nextCand, out);
+        curr.pop_back();
+    }
+}
+vector&lt;vector&lt;int&gt;&gt; findKCliques(const Net &amp;net, int k) {
+    vector&lt;vector&lt;int&gt;&gt; all;
+    vector&lt;int&gt; temp;
+    for (int i = 0; i &lt; net.V; ++i) {
+        vector&lt;int&gt; cand;
+        for (int nbr : net.edges[i]) 
+            if (nbr &gt; i) cand.push_back(nbr);
+        temp = {i};
+        collectCliques(net, k, temp, cand, all);
+    }
+    return all;
+}
+// computes the "h-clique core number" per vertex
+vector&lt;int&gt; computeCore(const Net &amp;net, int h) {
+    auto cliques = findKCliques(net, h);
+    int M = cliques.size();
+    vector&lt;int&gt; degree(net.V, 0);
+    vector&lt;vector&lt;int&gt;&gt; incidents(net.V);
+    for (int i = 0; i &lt; M; ++i) {
+        for (int v : cliques[i]) {
+            degree[v]++;
+            incidents[v].push_back(i);
+        }
+    }
+    int maxDeg = *max_element(degree.begin(), degree.end());
+    vector&lt;vector&lt;int&gt;&gt; bucket(maxDeg+1);
+    for (int v = 0; v &lt; net.V; ++v) 
+        bucket[degree[v]].push_back(v);
+    vector&lt;int&gt; coreNum(net.V, 0);
+    vector&lt;bool&gt; removed(net.V, false);
+    int done = 0;
+    for (int d = 0; d &lt;= maxDeg &amp;&amp; done &lt; net.V; ++d) {
+        for (int idx = 0; idx &lt; (int)bucket[d].size(); ++idx) {
+            int v = bucket[d][idx];
+            if (removed[v] || degree[v] != d) continue;
+            removed[v] = true;
+            coreNum[v] = d;
+            ++done;
+            for (int ci : incidents[v]) {
+                for (int u : cliques[ci]) {
+                    if (!removed[u] &amp;&amp; degree[u] &gt; d) {
+                        int old = degree[u]--;
+                        bucket[old-1].push_back(u);
                     }
-                    vector&lt;int&gt; degeneracy() const {
-                        vector&lt;int&gt; ordering;
-                        vector&lt;unordered_set&lt;int&gt;&gt; rem = adj;
-                        vector&lt;bool&gt; done(n, false);
-                        for (int i = 0; i &lt; n; i++) {
-                            int min_deg = INT_MAX, min_ver = -1;
-                            for (int v = 0; v &lt; n; v++) {
-                                if ((rem[v].size() &lt; min_deg) &amp;&amp; !done[v]) {
-                                    min_deg = rem[v].size();
-                                    min_ver = v;
-                                }
-                            }
-                            ordering.push_back(min_ver);
-                            done[min_ver] = true;
-                            for (int near : rem[min_ver]) {
-                                if (!done[near]) {
-                                    rem[near].erase(min_ver);
-                                }
-                            }
-                        }
-                        reverse(ordering.begin(), ordering.end());
-                        return ordering;
-                    }
-                    const unordered_set&lt;int&gt;&amp; get_neigh(int v) const { return adj[v]; }
-                    int size() const { return n; }
-                };
-                
-                struct BronKerbosch_Cliquer {
-                    const Graph &graph;
-                    vector&lt;int&gt; ordering;
-                    int totalCliques = 0, maxCliqueSize = 0;
-                    map&lt;int, int&gt; cliqueSizes;
-                    
-                    BronKerbosch_Cliquer(const Graph &g) : graph(g) {
-                        ordering = graph.degeneracy();
-                    }
-                    
-                    void BronKerboschDegeneracy(vector&lt;int&gt; &amp;R, vector&lt;int&gt; &amp;P, vector&lt;int&gt; &amp;X) {
-                        if (P.empty() &amp;&amp; X.empty()) {
-                            int curr_size = R.size();
-                            totalCliques++;
-                            maxCliqueSize = max(maxCliqueSize, curr_size);
-                            cliqueSizes[curr_size]++;
-                            return;
-                        }
-                        int pivot = -1, max_ele = -1;
-                        for (int u : P) {
-                            int c = 0;
-                            const auto &neigh = graph.get_neigh(u);
-                            for (int w : P)
-                                if (neigh.find(w) != neigh.end()) c++;
-                            if (c &gt; max_ele) {
-                                pivot = u;
-                                max_ele = c;
-                            }
-                        }
-                        for (int u : X) {
-                            int c = 0;
-                            const auto &neigh = graph.get_neigh(u);
-                            for (int w : P)
-                                if (neigh.find(w) != neigh.end()) c++;
-                            if (c &gt; max_ele) {
-                                pivot = u;
-                                max_ele = c;
-                            }
-                        }
-                        const auto &piv_neigh = graph.get_neigh(pivot);
-                        int i = 0;
-                        while (i &lt; (int)P.size()) {
-                            int v = P[i];
-                            if (piv_neigh.find(v) != piv_neigh.end()) {
-                                i++;
-                                continue;
-                            }
-                            const auto &v_neigh = graph.get_neigh(v);
-                            vector&lt;int&gt; P_new, X_new;
-                            for (int w : P)
-                                if (v_neigh.find(w) != v_neigh.end()) P_new.push_back(w);
-                            for (int w : X)
-                                if (v_neigh.find(w) != v_neigh.end()) X_new.push_back(w);
-                            R.push_back(v);
-                            BronKerboschDegeneracy(R, P_new, X_new);
-                            R.pop_back();
-                            P[i] = P.back();
-                            P.pop_back();
-                            X.push_back(v);
-                        }
-                    }
-                    
-                    void count_max_cliques() {
-                        int n = graph.size();
-                        for (int i = 0; i &lt; n; i++) {
-                            int v = ordering[i];
-                            const auto &neigh = graph.get_neigh(v);
-                            vector&lt;int&gt; P, X;
-                            for (int j = i + 1; j &lt; n; j++)
-                                if (neigh.find(ordering[j]) != neigh.end()) P.push_back(ordering[j]);
-                            for (int j = 0; j &lt; i; j++)
-                                if (neigh.find(ordering[j]) != neigh.end()) X.push_back(ordering[j]);
-                            vector&lt;int&gt; R = {v};
-                            BronKerboschDegeneracy(R, P, X);
-                        }
-                    }
-                    
-                    int get_max_size() const { return maxCliqueSize; }
-                    int get_tot_cliques() const { return totalCliques; }
-                    const map&lt;int, int&gt;&amp; get_size_dist() const { return cliqueSizes; }
-                };
-                
-                int main(int argc, char* argv[]) {
-                    if (argc != 2) {
-                        cerr &lt;&lt; "Please use './executable_name input.txt' for executing" &lt;&lt; endl;
-                        return 1;
-                    }
-                    ifstream inputFile(argv[1]);
-                    if (!inputFile) {
-                        cerr &lt;&lt; "Could not open file" &lt;&lt; endl;
-                        return 1;
-                    }
-                    auto start = chrono::high_resolution_clock::now();
-                    int n, m;
-                    inputFile &gt;&gt; n &gt;&gt; m;
-                    Graph graph(n);
-                    for (int i = 0; i &lt; m; ++i) {
-                        int u, v;
-                        inputFile &gt;&gt; u &gt;&gt; v;
-                        if (u &lt; 0 || u &gt;= n || v &lt; 0 || v &gt;= n) continue;
-                        graph.addEdge(u, v);
-                    }
-                    BronKerbosch_Cliquer counter(graph);
-                    counter.count_max_cliques();
-                    auto end = chrono::high_resolution_clock::now();
-                    chrono::duration&lt;double&gt; elapsed = end - start;
-                    cout &lt;&lt; "1. Largest clique size: " &lt;&lt; counter.get_max_size() &lt;&lt; endl;
-                    cout &lt;&lt; "2. Total no of maximal cliques: " &lt;&lt; counter.get_tot_cliques() &lt;&lt; endl;
-                    cout &lt;&lt; "3. Execution time: " &lt;&lt; elapsed.count() &lt;&lt; " seconds" &lt;&lt; endl;
-                    cout &lt;&lt; "4. Distribution of clique sizes:" &lt;&lt; endl;
-                    for (const auto&amp; [size, count] : counter.get_size_dist())
-                        cout &lt;&lt; "  Size " &lt;&lt; size &lt;&lt; ": " &lt;&lt; count &lt;&lt; " cliques" &lt;&lt; endl;
-                    return 0;
                 }
-            </code></pre>                
+            }
+        }
+    }
+    return coreNum;
+}
+struct FlowEdge { int to; long long cap; int rev; };
+class MaxFlowSolver {
+    int N, src, sink;
+    vector&lt;vector&lt;FlowEdge&gt;&gt; G;
+    vector&lt;int&gt; level, it;
+public:
+    MaxFlowSolver(int n,int s,int t)
+        : N(n), src(s), sink(t), G(n), level(n), it(n) {}
+
+    void addEdge(int a,int b,long long c) {
+        G[a].push_back({b,c,(int)G[b].size()});
+        G[b].push_back({a,0,(int)G[a].size()-1});
+    }
+    bool bfs() {
+        fill(level.begin(), level.end(), -1);
+        queue&lt;int&gt;q; 
+        level[src]=0; 
+        q.push(src);
+        while(!q.empty()) {
+            int u=q.front(); q.pop();
+            for(auto &amp;e:G[u]) {
+                if (e.cap&gt;0 &amp;&amp; level[e.to]&lt;0) {
+                    level[e.to] = level[u]+1;
+                    q.push(e.to);
+                }
+            }
+        }
+        return level[sink]&gt;=0;
+    }
+    long long dfs(int u,long long f) {
+        if (!f || u==sink) return f;
+        for (int &amp;i = it[u]; i &lt; (int)G[u].size(); ++i) {
+            auto &amp;e = G[u][i];
+            if (e.cap&gt;0 &amp;&amp; level[e.to]==level[u]+1) {
+                long long pushed = dfs(e.to, min(f,e.cap));
+                if (pushed) {
+                    e.cap   -= pushed;
+                    G[e.to][e.rev].cap += pushed;
+                    return pushed;
+                }
+            }
+        }
+        return 0;
+    }
+    long long maxflow() {
+        long long flow = 0;
+        while (bfs()) {
+            fill(it.begin(), it.end(), 0);
+            while (long long f = dfs(src, numeric_limits&lt;long long&gt;::max()))
+                flow += f;
+        }
+        return flow;
+    }
+    vector&lt;char&gt; reachable() {
+        vector&lt;char&gt; seen(N, 0);
+        queue&lt;int&gt; q;
+        seen[src] = 1;
+        q.push(src);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (auto &amp;e : G[u]) {
+                if (e.cap &gt; 0 &amp;&amp; !seen[e.to]) {
+                    seen[e.to] = 1;
+                    q.push(e.to);
+                }
+            }
+        }
+        return seen;
+    }
+};
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr &lt;&lt; "Usage: " &lt;&lt; argv[0] &lt;&lt; " &lt;edge-file&gt;\n";
+        return 1;
+    }
+    Net graph = loadFromEdgeList(argv[1]);
+    auto start_time = chrono::high_resolution_clock::now();
+    int h;
+    cout &lt;&lt; "Enter h (&gt;= 2): ";
+    if (!(cin &gt;&gt; h) || h &lt; 2) {
+        cerr &lt;&lt; "Error: h must be an integer &gt;= 2\n";
+        return 1;
+    }
+    auto coreVals = computeCore(graph, h);
+    int K = *max_element(coreVals.begin(), coreVals.end());
+    vector&lt;int&gt; subset;
+    subset.reserve(graph.V);
+    vector&lt;int&gt; mapIdx(graph.V, -1);
+    for (int i = 0; i &lt; graph.V; ++i) {
+        if (coreVals[i] &gt;= K) {
+            mapIdx[i] = (int)subset.size();
+            subset.push_back(i);
+        }
+    }
+    Net induced(subset.size());
+    for (int i = 0; i &lt; (int)subset.size(); ++i) {
+        int orig = subset[i];
+        for (int nbr : graph.edges[orig]) {
+            if (mapIdx[nbr] &gt; i) {
+                induced.connect(i, mapIdx[nbr]);
+            }
+        }
+    }
+    auto smallCliques = findKCliques(induced, h-1);
+    int C = smallCliques.size();
+    int nS = subset.size();
+    double low = double(K)/h, high = K;
+    vector&lt;int&gt; bestSol = subset; 
+    vector&lt;long long&gt; cliqueDeg(nS,0);
+    for (auto &amp;clq : smallCliques)
+        for (int v : clq)
+            ++cliqueDeg[v];
+    long long totalDeg = 0;
+    for (auto d : cliqueDeg) totalDeg += d;
+    while (high - low &gt; 1.0/(nS*(nS-1))) {
+        double alpha = 0.5*(low+high);
+        int Nnodes = 1 + nS + C + 1;
+        int S = 0, T = Nnodes-1;
+        MaxFlowSolver solver(Nnodes,S,T);
+        for (int v = 0; v &lt; nS; ++v) {
+            solver.addEdge(S, 1+v, cliqueDeg[v]);
+        }
+        long long capVT = (long long)(alpha * h);
+        for (int v = 0; v &lt; nS; ++v) {
+            solver.addEdge(1+v, 1+nS+C, capVT);
+        }
+        for (int i = 0; i &lt; C; ++i) {
+            int cnode = 1 + nS + i;
+            for (int v : smallCliques[i]) {
+                solver.addEdge(S, 1+v, 0);
+                solver.addEdge(cnode, 1+v, numeric_limits&lt;long long&gt;::max());
+                solver.addEdge(1+v, cnode, 1);
+            }
+        }
+        long long flow = solver.maxflow();
+        if (flow &lt; totalDeg) {
+            auto mark = solver.reachable();
+            vector&lt;int&gt; candidate;
+            for (int v = 0; v &lt; nS; ++v)
+                if (mark[1+v])
+                    candidate.push_back(subset[v]);
+            bestSol = candidate;
+            low = alpha;
+        } else {
+            high = alpha;
+        }
+    }
+    auto end_time = chrono::high_resolution_clock::now();
+    cout &lt;&lt; "Densest subgraph size = " &lt;&lt; bestSol.size() &lt;&lt; "\nVertices:";
+    for (int v : bestSol) cout &lt;&lt; " " &lt;&lt; v;
+    cout &lt;&lt; "\n";
+    unordered_set&lt;int&gt; inBest(bestSol.begin(), bestSol.end());
+    unordered_map&lt;int,int&gt; reindex;
+    for (int i = 0; i &lt; (int)bestSol.size(); ++i)
+        reindex[bestSol[i]] = i;
+    long long edgesCnt = 0;
+    Net subG(bestSol.size());
+    for (int oldv : bestSol) {
+        int v = reindex[oldv];
+        for (int nbr : graph.edges[oldv]) {
+            if (inBest.count(nbr)) {
+                int u = reindex[nbr];
+                if (u &gt; v) {
+                    subG.connect(v,u);
+                    ++edgesCnt;
+                }
+            }
+        }
+    }
+    chrono::duration&lt;double&gt; elapsed_time = end_time - start_time;
+    auto finalCliques = findKCliques(subG, h);
+    long long mu = finalCliques.size();
+    double cDensity = double(mu) / bestSol.size();
+    cout &lt;&lt; h &lt;&lt; "-clique-density = " &lt;&lt; cDensity
+                &lt;&lt; " (" &lt;&lt; mu &lt;&lt; " cliques over " &lt;&lt; bestSol.size() &lt;&lt; " vertices)\n" &lt;&lt; endl;
+    cout &lt;&lt; "Elapsed time: " &lt;&lt; elapsed_time.count() &lt;&lt; " seconds" &lt;&lt; endl;
+    return 0;
+}</code></pre>                
         </div>
 
         <div class="back-button">

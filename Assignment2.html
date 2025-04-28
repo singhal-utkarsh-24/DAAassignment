@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAA Assignment 1 - Group 46</title>
+    <title>DAA Assignment 2 - Group 46</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>DAA Assignment-1 Group 46</h1>
+        <h1>DAA Assignment-2 Group 46</h1>
 
         <!-- Menu Buttons -->
         <div class="button-container">
             <a href="exact.html" class="button">Algorithm 1 - EXACT</a>
-            <a href="coreExact.html" class="button">Algorithm 2 - Core-Exact</a>
+            <a href="coreExact.html" class="button">Algorithm 4 - Core-Exact</a>
             <!-- <a href="algo3.html" class="button">Chiba Clique Enumeration</a> -->
             <!-- <a href="about.html" class="button">About Us</a> -->
         </div>
@@ -21,32 +21,27 @@
         <!-- Paragraph Section -->
         <div class="paragraph">
             <p>
-                This assignment involves implementing and analyzing clique enumeration algorithms based on the provided research papers. The task includes writing code to find maximal cliques, determining the largest clique size, counting the total number of maximal cliques, and measuring execution time across different datasets. Additionally, the distribution of clique sizes will be visualized using histograms. A detailed complexity analysis will be conducted to compare theoretical and empirical performance. The final report will document the algorithm, observations, and findings, while a README file will provide setup and usage instructions for the implementation.
+                The <b>Densest Subgraph Discovery (DSD)</b> problem is foundational in graph mining, with applications in network science, biological analysis, and graph databases. DSD aims to find a subgraph with the highest density, defined either by <b>edge-density</b> or <b>h-clique-density</b>.
+            </p>
+            <p>
+                Traditional approaches face scalability challenges, especially with large datasets. This paper proposes efficient core-based exact and approximation algorithms leveraging k-core and (k, Ψ)-core concepts to solve DSD efficiently.
             </p>
         </div>
 
         <!-- NOTE Section -->
         <div class="note">
-            <p><strong>NOTE:</strong> Dataset text files have been pre-processed by a Python script.
+            <p><strong>NOTE:</strong> Dataset text files have been pre-processed by a Python script. Undirected graphs with 0-based indexing have been taken. 
 
-                Please find the updated txt files here: <a href="https://drive.google.com/drive/folders/14Zu3M2Rwfi4qMFNe9fhTzPMInP1ax2vw?usp=sharing"> Click Here</a> 
+                Please find the updated txt files here: <a href="https://drive.google.com/drive/folders/11Ii3_W-Qf7Q8dLPIHbOmENLo6fefIEar?usp=sharing"> Click Here</a> 
                 (Open using BITS mail) </br>
-                
-                1. Repeated edges have been removed to make the graph undirected </br>
-                2. Datasets with 1-based indexing have been converted to 0 by subtracting all values </br>
-                3. Wiki dataset had skipped some node numbers so nodes in edges were larger than n. We reduced the node values in edges by a constant amount wherever there was a gap in numbers, so as to not affect the structure of the graph. </p> </br>    
-                
-                The original datasets can be found here: </br>
-                1. <a href="https://snap.stanford.edu/data/email-Enron.html"> https://snap.stanford.edu/data/email-Enron.html </a> </br>
-                2. <a href="https://snap.stanford.edu/data/as-Skitter.html"> https://snap.stanford.edu/data/as-Skitter.html </a> <br>
-                3. <a href="https://snap.stanford.edu/data/wiki-Vote.html"> https://snap.stanford.edu/data/wiki-Vote.html </a> <br>
+            
         </div>
         
         <!-- Histogram Section -->
-        <div class="histogram-section">
+        <!-- <div class="histogram-section">
             <h2>Execution Times Comparison across all Algorithms</h2>
             <img src="Execution_Time_Comparison.jpg" alt="Execution Times Comparison Histogram">
-        </div>
+        </div> -->
 
         <!-- Table Section -->
         <!-- <div class="table-section">
